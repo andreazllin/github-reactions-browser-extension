@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 
 export default defineConfig({
 	build: {
@@ -21,4 +22,18 @@ export default defineConfig({
 		// Generate source maps for debugging
 		sourcemap: false,
 	},
+	plugins: [
+		viteStaticCopy({
+			targets: [
+				{
+					src: "assets/chrome/manifest.json",
+					dest: ".",
+				},
+				{
+					src: "assets/icons/*",
+					dest: ".",
+				},
+			],
+		}),
+	],
 });
