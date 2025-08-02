@@ -4,7 +4,7 @@ import { viteStaticCopy } from "vite-plugin-static-copy";
 export default defineConfig({
 	build: {
 		lib: {
-			entry: "src/main.ts",
+			entry: "src/index.ts",
 			name: "GitHubReactionsExtension",
 			fileName: "index",
 			formats: ["es"],
