@@ -1,5 +1,5 @@
-import { defineConfig } from "vite";
-import { viteStaticCopy } from "vite-plugin-static-copy";
+import {defineConfig} from "vite"
+import {viteStaticCopy} from "vite-plugin-static-copy"
 
 export default defineConfig({
 	build: {
@@ -7,33 +7,33 @@ export default defineConfig({
 			entry: "src/index.ts",
 			name: "GitHubReactionsExtension",
 			fileName: "index",
-			formats: ["es"],
+			formats: ["es"]
 		},
 		rollupOptions: {
 			output: {
 				// Ensure the bundle is self-contained
 				inlineDynamicImports: true,
 				// Generate a single file
-				manualChunks: undefined,
-			},
+				manualChunks: undefined
+			}
 		},
 		// Output to dist directory
 		outDir: "dist",
 		// Generate source maps for debugging
-		sourcemap: false,
+		sourcemap: false
 	},
 	plugins: [
 		viteStaticCopy({
 			targets: [
 				{
 					src: "assets/chrome/manifest.json",
-					dest: ".",
+					dest: "."
 				},
 				{
 					src: "assets/icons/*",
-					dest: ".",
-				},
-			],
-		}),
-	],
-});
+					dest: "."
+				}
+			]
+		})
+	]
+})

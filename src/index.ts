@@ -1,6 +1,6 @@
-import { init } from "./helpers/initialization";
+import {init} from "./helpers/initialization"
 
-init();
+init()
 
 // const observer = new MutationObserver((mutations: MutationRecord[]) => {
 // 	for (const mutation of mutations) {
