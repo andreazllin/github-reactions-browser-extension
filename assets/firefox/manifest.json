@@ -1,0 +1,30 @@
+{
+	"manifest_version": 2,
+	"name": "GitHubReactionsExtension",
+	"version": "0.0.0",
+	"description": "Placeholder",
+	"content_scripts": [
+		{
+			"matches": ["*://*.github.com/*"],
+			"js": ["index.js"],
+			"run_at": "document_end"
+		}
+	],
+	"permissions": [
+		"https://www.github.com/",
+		"http://www.github.com/",
+		"storage"
+	],
+	"icons": {
+		"16": "icon_16.png",
+		"48": "icon_48.png",
+		"128": "icon_128.png",
+		"256": "icon_256.png"
+	},
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "{f6ec3962-fd1d-4a7b-8dab-d211fbf91389}",
+			"strict_min_version": "57.0a1"
+		}
+	}
+}
