@@ -1,6 +1,8 @@
 import {defineConfig} from "vite"
 import {viteStaticCopy} from "vite-plugin-static-copy"
 
+const browser = process.env.BROWSER || "chrome"
+
 export default defineConfig({
 	build: {
 		lib: {
@@ -11,22 +13,19 @@ export default defineConfig({
 		},
 		rollupOptions: {
 			output: {
-				// Ensure the bundle is self-contained
 				inlineDynamicImports: true,
-				// Generate a single file
 				manualChunks: undefined
 			}
 		},
-		// Output to dist directory
-		outDir: "dist",
-		// Generate source maps for debugging
-		sourcemap: false
+		outDir: `dist/${browser}`,
+		sourcemap: false,
+		emptyOutDir: true
 	},
 	plugins: [
 		viteStaticCopy({
 			targets: [
 				{
-					src: "assets/chrome/manifest.json",
+					src: `assets/${browser}/manifest.json`,
 					dest: "."
 				},
 				{
