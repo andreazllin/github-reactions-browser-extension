@@ -1,4 +1,5 @@
-export const ISSUE_SIDEBAR_ID = "issue-viewer-metadata-pane" // data-testid
+// export const ISSUE_SIDEBAR_ID = "issue-viewer-metadata-pane" // data-testid
+export const ISSUE_SIDEBAR_ID = "sticky-sidebar" // data-testid
 export const PR_SIDEBAR_ID = "partial-discussion-sidebar" // id, works with both PRs and Discussions
 export const EXTENSION_CONTAINER_ID = "korekoi-gh-reactions-container" // id
 
