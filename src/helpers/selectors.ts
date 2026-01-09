@@ -2,6 +2,22 @@ export const dataTestId = (id: string) => `[data-testid="${id}"]`
 export const ariaLabel = (label: string) => `[aria-label="${label}"]`
 export const dataComponent = (component: string) => `[data-component="${component}"]`
 
+/**
+ * Detect page type from URL
+ */
+export type PageType = "issue" | "pull" | "discussion" | "unknown"
+
+export const getPageType = (): PageType => {
+	const path = window.location.pathname
+	if (/\/issues\/\d+/.test(path)) return "issue"
+	if (/\/pull\/\d+/.test(path)) return "pull"
+	if (/\/discussions\/\d+/.test(path)) return "discussion"
+	return "unknown"
+}
+
+export const isPullRequestPage = () => getPageType() === "pull"
+export const isIssuePage = () => getPageType() === "issue"
+
 export const hasAncestorWithAttribute = (element: Element | null, attribute: string, value: string) => {
 	while (element) {
 		if (element.getAttribute(attribute) === value) {
@@ -14,7 +30,7 @@ export const hasAncestorWithAttribute = (element: Element | null, attribute: str
 
 /**
  * Finds the comment anchor/link for a given element by traversing up the DOM
- * Returns the anchor hash (e.g., "#issuecomment-12345") or null if it's the issue body
+ * Returns the anchor hash (e.g., "#issuecomment-12345") or null
  */
 export const findCommentAnchor = (element: Element | null): string | null => {
 	let current = element
@@ -22,7 +38,7 @@ export const findCommentAnchor = (element: Element | null): string | null => {
 	while (current) {
 		const id = current.id
 
-		// Check for direct comment IDs
+		// Check for direct comment IDs (works for both Issues and PRs)
 		if (id && id.startsWith("issuecomment-")) {
 			return `#${id}`
 		}
@@ -33,8 +49,21 @@ export const findCommentAnchor = (element: Element | null): string | null => {
 			return `#${id}`
 		}
 
+		// Issue body (React-based issues page)
 		if (id === "issue-body-viewer") {
 			return "#issue-body-viewer"
+		}
+
+		// PR body - look for the first comment which is the PR description
+		if (current.classList.contains("timeline-comment") && current.closest(".js-discussion")) {
+			// Check if this is the PR body (first comment)
+			const parentItem = current.closest(".js-timeline-item")
+			if (parentItem) {
+				const commentContainer = parentItem.querySelector("[id^='issuecomment-']")
+				if (commentContainer) {
+					return `#${commentContainer.id}`
+				}
+			}
 		}
 
 		// Look for timestamp anchor links within comment that contain the hash
@@ -82,9 +111,13 @@ export const findCommentAnchor = (element: Element | null): string | null => {
 /**
  * Gets a display label for the comment type
  */
-export const getCommentLabel = (anchor: string, index: number): string => {
+export const getCommentLabel = (anchor: string, index: number, pageType: PageType): string => {
 	if (anchor === "#issue-body-viewer") {
 		return "Issue"
+	}
+	// First comment on PR is the PR description
+	if (pageType === "pull" && index === 0) {
+		return "PR"
 	}
 	if (anchor.startsWith("#issuecomment-")) {
 		return `Comment ${index}`
@@ -99,7 +132,7 @@ export const getCommentLabel = (anchor: string, index: number): string => {
 }
 
 /**
- * Checks if an anchor is for the issue body (not a comment)
+ * Checks if an anchor is for the issue/PR body (not a comment)
  */
 export const isIssueBodyAnchor = (anchor: string): boolean => {
 	return anchor === "#issue-body-viewer"

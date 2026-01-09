@@ -1,5 +1,12 @@
 import {getReactionsContainers} from "../constants/elements"
-import {dataComponent, findCommentAnchor, getCommentLabel, isIssueBodyAnchor} from "../helpers/selectors"
+import {
+	dataComponent,
+	findCommentAnchor,
+	getCommentLabel,
+	getPageType,
+	isIssueBodyAnchor,
+	isPullRequestPage
+} from "../helpers/selectors"
 import {Credits} from "./credits"
 
 // Emoji to subtle tint color mapping
@@ -65,6 +72,60 @@ const createReactionPill = (emoji: string, amount: string) => {
 	return pill
 }
 
+// Parse reactions from Issue/Discussion page (React-based UI)
+const parseIssueReactions = (node: Element) => {
+	const children = Array.from(node.children)
+
+	return children
+		.map((child) => {
+			if (
+				child.tagName === "BUTTON" &&
+				Array.from(child.children).some((c) => c.getAttribute("data-component") === "buttonContent")
+			) {
+				const emoji = child.querySelector(dataComponent("leadingVisual"))
+				const amount = child.querySelector(dataComponent("text"))
+
+				let amountText = ""
+				if (amount) {
+					const textNodes = Array.from(amount.childNodes)
+						.filter((n) => n.nodeType === Node.TEXT_NODE)
+						.map((n) => n.textContent?.trim())
+						.filter(Boolean)
+						.join("")
+					amountText = textNodes
+				}
+
+				return {
+					emoji: emoji?.textContent || "",
+					amount: amountText
+				}
+			}
+			return null
+		})
+		.filter(Boolean)
+}
+
+// Parse reactions from PR page (classic UI)
+const parsePRReactions = (node: Element) => {
+	// PR reactions are buttons with data-reaction-content and text like "😄 1"
+	const buttons = node.querySelectorAll("button[data-reaction-content]")
+
+	return Array.from(buttons)
+		.map((button) => {
+			const text = button.textContent?.trim() || ""
+			// Text format is like "😄 1" or "👍 5"
+			const match = text.match(/^(.+?)\s*(\d+)$/)
+			if (match) {
+				return {
+					emoji: match[1].trim(),
+					amount: match[2]
+				}
+			}
+			return null
+		})
+		.filter(Boolean)
+}
+
 export const Reactions = () => {
 	const reactions = document.createElement("div")
 	reactions.style.cssText = `
@@ -73,50 +134,29 @@ export const Reactions = () => {
 		gap: 8px;
 	`
 
+	const pageType = getPageType()
+	const isPR = isPullRequestPage()
 	let commentIndex = 0
 
 	const data = Array.from(getReactionsContainers())
-		.filter(({children}) => children.length > 1)
 		.map((node) => {
-			const children = Array.from(node.children)
 			const anchor = findCommentAnchor(node)
 
-			// Increment index only for comments (not issue body)
+			// Parse reactions based on page type
+			const reactionButtons = isPR ? parsePRReactions(node) : parseIssueReactions(node)
+
+			// Skip if no reactions
+			if (reactionButtons.length === 0) {
+				return null
+			}
+
+			// Increment index for comments
 			if (anchor && !isIssueBodyAnchor(anchor)) {
 				commentIndex++
 			}
 
-			const label = getCommentLabel(anchor ?? "#issue-body-viewer", commentIndex)
-			// Use anchor for same-page navigation (no reload)
+			const label = getCommentLabel(anchor ?? "#issue-body-viewer", commentIndex, pageType)
 			const href = anchor ?? "#issue-body-viewer"
-
-			const reactionButtons = children
-				.map((child) => {
-					if (
-						child.tagName === "BUTTON" &&
-						Array.from(child.children).some((c) => c.getAttribute("data-component") === "buttonContent")
-					) {
-						const emoji = child.querySelector(dataComponent("leadingVisual"))
-						const amount = child.querySelector(dataComponent("text"))
-
-						let amountText = ""
-						if (amount) {
-							const textNodes = Array.from(amount.childNodes)
-								.filter((n) => n.nodeType === Node.TEXT_NODE)
-								.map((n) => n.textContent?.trim())
-								.filter(Boolean)
-								.join("")
-							amountText = textNodes
-						}
-
-						return {
-							emoji: emoji?.textContent || "",
-							amount: amountText
-						}
-					}
-					return null
-				})
-				.filter(Boolean)
 
 			return {
 				label,
@@ -125,7 +165,7 @@ export const Reactions = () => {
 				reactions: reactionButtons
 			}
 		})
-		.filter((item) => item.reactions.length > 0)
+		.filter((item): item is NonNullable<typeof item> => item !== null)
 
 	// Create styled rows for each comment with reactions
 	for (const item of data) {
@@ -164,7 +204,14 @@ export const Reactions = () => {
 		`
 
 		const icon = document.createElement("span")
-		icon.textContent = item.anchor && isIssueBodyAnchor(item.anchor) ? "📝" : "💬"
+		// Different icons for PR body vs Issue body vs comments
+		if (item.label === "PR") {
+			icon.textContent = "🔀"
+		} else if (item.anchor && isIssueBodyAnchor(item.anchor)) {
+			icon.textContent = "📝"
+		} else {
+			icon.textContent = "💬"
+		}
 		icon.style.cssText = `
 			font-size: 11px;
 			opacity: 0.8;
